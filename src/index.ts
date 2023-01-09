@@ -6,9 +6,7 @@ if (!TOKEN) throw new Error("Token not found");
 
 const bot = new telegramBot(TOKEN, { polling: true })
 
-// bot.on("message", (msg) => {
-//     bot.sendMessage(msg.chat.id, "Hello World")
-// })
+
 
 
 // chatbotapi
@@ -35,17 +33,10 @@ bot.onText(/\/photo/, (msg) => {
 );
 
 
-bot.onText(/\/sticker/, (msg) => {
-    const chatId = msg.chat.id;
-    bot.sendSticker(chatId, "https://picsum.photos/200/300");
-});
 
 bot.onText(/\/location/, (msg) => {
     const chatId = msg.chat.id;
-
-
-
-    bot.sendLocation(chatId, 50.4501, 30.5234);
+    bot.sendLocation(chatId, 12.233, 44.2112);
 });
 
 bot.onText(/\/venue/, (msg) => {
@@ -88,23 +79,22 @@ bot.onText(/\/inline/, (msg) => {
 }
 );
 
-bot.onText(/\./, (msg) => {
+
+
+
+
+
+bot.on("message", (msg) => {
+    const admin = Number(process.env.ADMIN);
     const chatId: number = msg.chat.id;
-    async function get() {
-        console.log("Fetching anime");
-        console.log(msg);
-        bot.sendMessage(chatId, `Hello ${msg.chat.first_name}`, {
+    const greetings = ['hi', 'hlo', 'Hello', 'HLO', 'Hi', 'Hii', 'hello'];
+    if (!msg.text) return;
+    if (greetings.includes(msg.text) && msg.from?.id === admin) {
+        bot.sendMessage(msg.chat.id, "Hello Boss", {
             reply_to_message_id: msg.message_id
-        });
+        })
+    } else
+        bot.sendMessage(chatId, `Hello ${msg.chat.first_name} @${msg.chat.username}`);
 
-    }
-    get();
-});
+})
 
-bot.on("chat_member", (msg) => {
-
-    console.log(msg);
-    const chatId = msg.chat.id;
-    bot.sendMessage(chatId, "Hello World")
-
-});
