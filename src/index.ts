@@ -30,5 +30,3 @@ bot.on('message', (msg) => {
         caption: "I'm a bot!"
     });
 })
-
-
