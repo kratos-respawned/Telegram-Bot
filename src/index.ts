@@ -116,7 +116,7 @@ bot.onText(/\/compile/, (msg) => {
         if (!code) return;
         const file = "main.cpp";
         fs.writeFileSync(file, code);
-        exec(`g++ ${file} -o main && .\/main`, (err, stdout, stderr) => {
+        exec(`g++ ${file} -o main && ./main`, (err, stdout, stderr) => {
             if (err) {
                 bot.sendMessage(chatId, err.message, {
                     reply_to_message_id: message_id
@@ -137,7 +137,23 @@ bot.onText(/\/compile/, (msg) => {
 
     });
 })
-
+bot.onText(/\/exec (.+)/, (msg, match) => {
+    if (!match) {
+        bot.sendMessage(msg.chat.id, "Please provide a command");
+        return
+    };
+    exec(match[1], (err, stdout, stderr) => {
+        if (err) {
+            bot.sendMessage(msg.chat.id, err.message);
+            return;
+        }
+        if (stderr) {
+            bot.sendMessage(msg.chat.id, stderr);
+            return;
+        }
+        bot.sendMessage(msg.chat.id, stdout);
+    })
+})
 bot.onText(/\/runRedwalls/, (msg) => {
     if (msg.from?.id !== Number(process.env.ADMIN)) {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
