@@ -9,7 +9,8 @@
   "scripts": {
     "build": "swc ./src -d ./dist --source-maps",
     "start": "nodemon --watch ./dist --exec node ./dist/index.js",
-    "dev": "concurrently \"npm run build -- --watch\" \"npm run start\""
+    "dev": "concurrently \"npm run build -- --watch\" \"npm run start\"",
+    "prod": "node ./dist/index.js"
   },
   "devDependencies": {
     "@swc/cli": "^0.1.59",
