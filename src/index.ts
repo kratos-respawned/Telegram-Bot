@@ -92,24 +92,28 @@ bot.onText(/\/compile/, (msg) => {
     });
 })
 bot.onText(/\/exec (.+)/, (msg, match) => {
-    var LogID: number;
-    LogID = process.env.LOGS ? Number(process.env.LOGS) : Number(process.env.ADMIN);
+    const LogID: number = process.env.LOGS ? Number(process.env.LOGS) : Number(process.env.ADMIN);
+    if (msg.from?.id !== Number(process.env.ADMIN)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        bot.sendMessage(LogID, `${msg.from?.first_name}  tried to use /exec`);
+        return;
+    }
     if (!match) {
         bot.sendMessage(msg.chat.id, "Please provide a command");
         return
     };
 
-    if (match[1].match(/rm \-rf/)) {
-        bot.sendMessage(msg.chat.id, "You are not authorized to use this command \nThis incident will be reported");
-        bot.sendMessage(LogID, `${msg.from?.first_name}  tried to delete files`);
-        return;
-    }
+    // if (match[1].match(/rm \-rf/)) {
+    //     bot.sendMessage(msg.chat.id, "You are not authorized to use this command \nThis incident will be reported");
+    //     bot.sendMessage(LogID, `${msg.from?.first_name}  tried to delete files`);
+    //     return;
+    // }
 
 
-    if (match[1].match(/sudo/)) {
-        bot.sendMessage(msg.chat.id, "You are not authorized to use this command \nThis incident will be reported");
-        bot.sendMessage(LogID, `${msg.from?.first_name}  tried to delete files`);
-    }
+    // if (match[1].match(/sudo/)) {
+    //     bot.sendMessage(msg.chat.id, "You are not authorized to use this command \nThis incident will be reported");
+    //     bot.sendMessage(LogID, `${msg.from?.first_name}  tried to delete files`);
+    // }
     exec(match[1], (err, stdout, stderr) => {
         if (err) {
             bot.sendMessage(msg.chat.id, err.message);
