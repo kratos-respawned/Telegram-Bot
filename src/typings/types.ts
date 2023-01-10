@@ -1,4 +1,4 @@
-type Waifu = {
+export type Waifu = {
     images: {
         signature: string;
         extension: string;

@@ -1,6 +1,7 @@
 node_modules
 dist
 .env
-*.cpp
-*.exe
-uploads
+./main.cpp
+./main.exe
+./main
+./uploads

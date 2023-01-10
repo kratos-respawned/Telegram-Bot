@@ -2,6 +2,7 @@ import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import { exec } from "child_process"
 import fs from "fs"
+import { Waifu } from "./typings/types"
 import * as http from "https"
 dotenv.config();
 const TOKEN = process.env.TOKEN;
@@ -177,6 +178,10 @@ async function getWaifu(link: string, msg: telegramBot.Message) {
 }
 
 bot.on("photo", (msg: telegramBot.Message) => {
+    if (msg.from?.id !== Number(process.env.ADMIN)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        return;
+    }
     if (msg.photo) {
         const photo: telegramBot.PhotoSize = msg.photo[msg.photo.length - 1];
         const fileId: string = photo.file_id;
