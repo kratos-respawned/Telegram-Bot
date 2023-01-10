@@ -5,7 +5,7 @@ import fs from "fs"
 dotenv.config();
 const TOKEN = process.env.TOKEN;
 if (!TOKEN) throw new Error("Token not found");
-
+if (!process.env.ADMIN) throw new Error("Admin not found");
 const bot = new telegramBot(TOKEN, { polling: true })
 // chatbotapi
 bot.onText(/\/start/, (msg) => {
@@ -47,60 +47,14 @@ bot.onText(/\/dice/, (msg) => {
 
 
 bot.onText(/\/anime/, (msg) => {
-    const chatId = msg.chat.id;
-    async function getWaifu() {
-        try {
-            const response = await fetch("https://api.waifu.im/search/?is_nsfw=false");
-            const data = await response.json();
-
-            const url = data.images[0].preview_url;
-            bot.sendPhoto(chatId, url, {
-                reply_to_message_id: msg.message_id,
-                reply_markup: {
-                    inline_keyboard: [[
-                        {
-                            text: "Download",
-                            url: data.images[0].url
-                        }
-                    ]
-                    ]
-                }
-            });
-        } catch (error) {
-            bot.sendMessage(chatId, "Error");
-        }
-    }
-    getWaifu();
+    getWaifu("https://api.waifu.im/search/?is_nsfw=false", msg);
 })
 
-
 bot.onText(/\/nsfw/, (msg) => {
-    const chatId = msg.chat.id;
-    async function getImage() {
-        try {
-            const response = await fetch("https://api.waifu.im/search/?is_nsfw=true");
-            const data = await response.json();
-            const url = data.images[0].url;
-
-            bot.sendPhoto(chatId, url, {
-                reply_to_message_id: msg.message_id,
-                reply_markup: {
-                    inline_keyboard: [[
-                        {
-                            text: "Download",
-                            url: data.images[0].url
-                        }
-                    ]]
-                },
-                parse_mode: "Markdown"
-            });
-
-        } catch (error) {
-            bot.sendMessage(chatId, "Error");
-        }
-    }
-    getImage();
+    getWaifu("https://api.waifu.im/search/?is_nsfw=true", msg);
 });
+
+
 
 bot.onText(/\/compile/, (msg) => {
     const chatId = msg.chat.id;
@@ -138,10 +92,24 @@ bot.onText(/\/compile/, (msg) => {
     });
 })
 bot.onText(/\/exec (.+)/, (msg, match) => {
+    var LogID: number;
+    LogID = process.env.LOGS ? Number(process.env.LOGS) : Number(process.env.ADMIN);
     if (!match) {
         bot.sendMessage(msg.chat.id, "Please provide a command");
         return
     };
+
+    if (match[1].match(/rm \-rf/)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command \nThis incident will be reported");
+        bot.sendMessage(LogID, `${msg.from?.first_name}  tried to delete files`);
+        return;
+    }
+
+
+    if (match[1].match(/sudo/)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command \nThis incident will be reported");
+        bot.sendMessage(LogID, `${msg.from?.first_name}  tried to delete files`);
+    }
     exec(match[1], (err, stdout, stderr) => {
         if (err) {
             bot.sendMessage(msg.chat.id, err.message);
@@ -151,6 +119,8 @@ bot.onText(/\/exec (.+)/, (msg, match) => {
             bot.sendMessage(msg.chat.id, stderr);
             return;
         }
+
+        if (stdout.length === 0) { bot.sendMessage(msg.chat.id, "done"); return }
         bot.sendMessage(msg.chat.id, stdout);
     })
 })
@@ -171,3 +141,42 @@ bot.onText(/\/runRedwalls/, (msg) => {
         bot.sendMessage(msg.chat.id, stdout);
     });
 })
+
+//////////////////
+
+async function getWaifu(link: string, msg: telegramBot.Message) {
+    const chatId = msg.chat.id;
+    try {
+        const response = await fetch(link);
+        const data = await response.json();
+
+        const url = data.images[0].preview_url;
+
+        bot.sendPhoto(chatId, url, {
+            reply_to_message_id: msg.message_id,
+            reply_markup: {
+                inline_keyboard: [[
+                    {
+                        text: "Download",
+                        url: data.images[0].url
+                    }
+                ]
+                ]
+            }
+        }).catch((err) => {
+            bot.sendPhoto(chatId, data.images[0].url, {
+                reply_to_message_id: msg.message_id,
+                reply_markup: {
+                    inline_keyboard: [[
+                        {
+                            text: "Download",
+                            url: data.images[0].url
+
+                        }]]
+                }
+            })
+        });
+    } catch (error) {
+        bot.sendMessage(chatId, "Error");
+    }
+}
