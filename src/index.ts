@@ -4,6 +4,7 @@ import { exec } from "child_process"
 import fs from "fs"
 import { Waifu } from "./typings/types"
 import * as http from "https"
+import { testAPI } from "./ai.js"
 dotenv.config();
 const TOKEN = process.env.TOKEN;
 if (!TOKEN) throw new Error("Token not found");
@@ -208,3 +209,32 @@ bot.on("photo", (msg: telegramBot.Message) => {
         });
     }
 });
+
+
+bot.onText(/\/download (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+    if (msg.from?.id !== Number(process.env.ADMIN)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        return;
+    }
+    if (!match) {
+        bot.sendMessage(msg.chat.id, "Please provide a link");
+        return;
+    }
+    const link: string = match[1];
+    const file_name: string = link.split("/").pop() as string;
+    const file_path: string = `./uploads/${file_name}`;
+    const fileStream: fs.WriteStream = fs.createWriteStream
+        (file_path);
+    http.get(link, (response) => {
+        response.pipe(fileStream);
+        fileStream.on("finish", () => {
+            fileStream.close();
+            bot.sendDocument(msg.chat.id, file_path, {
+                reply_to_message_id: msg.message_id
+            });
+        });
+    }
+    );
+});
+console.log("Bot started");
+testAPI();
