@@ -36,7 +36,7 @@ export const AiImage = async (bot: TelegramBot, msg: TelegramBot.Message, text: 
         bot.sendMessage(msg.chat.id, "Error");
         return;
     }
-    const url: string | undefined = response.data.data[response.data.data.length].url;
+    const url: string | undefined = response.data.data[response.data.data.length - 1].url;
     if (!url) return;
     bot.sendPhoto(msg.chat.id, url).catch((err) => {
         bot.sendMessage(msg.chat.id, "Error sending image \n here is the link: " + url);
