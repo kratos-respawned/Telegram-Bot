@@ -1,28 +1,32 @@
 import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
-import { exec } from "child_process"
 import fs from "fs"
 
-import { testAPI } from "./ai.js"
+////////////////////////////////////////////////////////////////// 
+// modules
+////////////////////////////////////////////////////////////////// 
+import { AiResponse, botResponse, startAI } from "./ai.js"
 import uploadFile from "./fileHandling/uploader.js"
 import downloader, { downloadAll } from "./fileHandling/downloader.js"
 import executeCommand from "./execution/execute.js"
 import getWaifu from "./anime/getWaifu.js"
+// //////////////////////////////////////////////////////////
+
+
 dotenv.config();
+startAI();
 var count: number = 0;
 const TOKEN = process.env.TOKEN;
 if (!TOKEN) throw new Error("Token not found");
 if (!process.env.ADMIN) throw new Error("Admin not found");
 const bot = new telegramBot(TOKEN, { polling: true })
-// //////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 
 const isAuthorized = (msg: telegramBot.Message): boolean => {
     return msg.from?.id === Number(process.env.ADMIN)
 };
 
-
-
-// //////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////
 
 
 bot.onText(/^\/start$/, (msg: telegramBot.Message) => {
@@ -181,6 +185,57 @@ bot.onText(/\/send (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | nu
 
 
 
+// //////////////////////////////////////////////////////////////
+//  for AI chat
+// //////////////////////////////////////////////////////////////
+bot.onText(/\/chat (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+    if (!isAuthorized) {
+        bot.sendMessage(msg.chat.id, "Due to openAI's limitations, this command is only available to authorized users");
+        return;
+    }
+    if (!match) {
+        bot.sendMessage(msg.chat.id, "Please provide a message");
+        return;
+    }
+    const message: string = match[1];
+    botResponse(bot, msg, message, 0.9);
+});
+
+bot.onText(/\/translate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+    if (!isAuthorized) {
+        bot.sendMessage(msg.chat.id, "Due to openAI's limitations, this command is only available to authorized users");
+        return;
+    }
+    if (!match) {
+        bot.sendMessage(msg.chat.id, "Please provide a message");
+        return;
+    }
+    const message: string = match[1];
+    botResponse(bot, msg, message, 0,);
+})
+
+// //////////////////////////////////////////////////////////////
+//  for getting weather
+// //////////////////////////////////////////////////////////////
+// bot.onText(/\/weather (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+//     if (!match) {
+//         bot.sendMessage(msg.chat.id, "Please provide a city name");
+//         return;
+//     }
+//     const city: string = match[1];
+
+
+//     const url: string = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.WEATHER_API_KEY}&units=metric`;
+//     axios.get(url).then((res) => {
+//         const data: any = res.data;
+//         const weather: string = `Weather in ${data.name} is ${data.weather[0].description} with a temperature of ${data.main.temp}°C`;
+
+//         bot.sendMessage(msg.chat.id, weather);
+//     }).catch((err) => {
+//         bot.sendMessage(msg.chat.id, "City not found");
+//     })
+
+// });
 
 
 
