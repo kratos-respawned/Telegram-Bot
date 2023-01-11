@@ -4,5 +4,5 @@ dist
 .env
 *.cpp
 *.exe
-./uploads
+uploads
 node_modules
