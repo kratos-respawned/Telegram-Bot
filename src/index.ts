@@ -227,7 +227,9 @@ bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
         return;
     }
     const message: string = match[1];
-    AiImage(bot, msg, message);
+    bot.sendMessage(msg.chat.id, "Generating...").then(() => {
+        AiImage(bot, msg, message);
+    })
 })
 // //////////////////////////////////////////////////////////////
 //  for getting weather

@@ -30,6 +30,7 @@ export const AiImage = async (bot: TelegramBot, msg: TelegramBot.Message, text: 
         prompt: text,
         n: 1,
     }
+
     const response = await openai.createImage(data)
     if (!response) {
         bot.sendMessage(msg.chat.id, "Error");
