@@ -3,14 +3,16 @@ import dotenv from "dotenv"
 import { exec } from "child_process"
 import fs from "fs"
 import { Waifu } from "./typings/types"
-import * as http from "https"
+import https from "https"
+import http from "http"
 import { testAPI } from "./ai.js"
 dotenv.config();
+var count: number = 0;
 const TOKEN = process.env.TOKEN;
 if (!TOKEN) throw new Error("Token not found");
 if (!process.env.ADMIN) throw new Error("Admin not found");
 const bot = new telegramBot(TOKEN, { polling: true })
-// chatbotapi
+// //////////////////////////////////////////////////////////
 bot.onText(/^\/start$/, (msg: telegramBot.Message) => {
     bot.sendMessage(msg.chat.id, "Hello World")
 })
@@ -197,7 +199,7 @@ bot.on("photo", (msg: telegramBot.Message) => {
             const fileStream: fs.WriteStream = fs.createWriteStream
                 (file_path);
 
-            http.get(url, (response) => {
+            https.get(url, (response) => {
                 response.pipe(fileStream);
                 fileStream.on("finish", () => {
                     fileStream.close();
@@ -220,21 +222,71 @@ bot.onText(/\/download (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
         bot.sendMessage(msg.chat.id, "Please provide a link");
         return;
     }
-    const link: string = match[1];
-    const file_name: string = link.split("/").pop() as string;
-    const file_path: string = `./uploads/${file_name}`;
-    const fileStream: fs.WriteStream = fs.createWriteStream
-        (file_path);
-    http.get(link, (response) => {
-        response.pipe(fileStream);
-        fileStream.on("finish", () => {
-            fileStream.close();
-            bot.sendDocument(msg.chat.id, file_path, {
-                reply_to_message_id: msg.message_id
+    const link: string = match[1].split("/").pop() as string;
+    console.log(link);
+    const chatId: number = msg.chat.id;
+    const message_id: number = msg.message_id;
+    bot.sendMessage(chatId, "Downloading", {
+        reply_to_message_id: message_id
+    }).then(() => {
+        const stream = fs.createReadStream('./uploads/' + link);
+        bot.sendDocument(chatId, stream).catch((err) => {
+            console.log(err.message);
+            bot.sendMessage(chatId, err.message);
+        });
+    })
+});
+
+bot.onText(/\/downloadAll/, (msg: telegramBot.Message) => {
+    const chatId: number = msg.chat.id;
+    const message_id: number = msg.message_id;
+    if (msg.from?.id !== Number(process.env.ADMIN)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        return;
+    }
+    var files = fs.readdirSync('./uploads');
+    bot.sendMessage(chatId, "Downloading", {
+        reply_to_message_id: message_id
+    }).then(() => {
+        files.forEach((file) => {
+            const stream = fs.createReadStream('./uploads/' + file);
+            bot.sendDocument(chatId, stream).catch((err) => {
+                console.log(err.message);
+                bot.sendMessage(chatId, err.message);
             });
         });
-    }
-    );
+    })
 });
-console.log("Bot started");
-testAPI();
+
+bot.on("polling_error", (msg) => {
+    ++count;
+    if (count == 5) {
+        bot.close();
+    }
+    bot.sendMessage(msg.message, `Polling error ${count}`).catch((err) => { });
+
+})
+
+
+// console.log("Bot started");
+// testAPI();
+// bot.on("message", (msg) => {
+//     const chatid: number = msg.chat.id;
+//     bot.sendMessage(chatid, "Hello").then((msg) => {
+//         setTimeout(() => {
+//             bot.editMessageText("How are you", {
+//                 chat_id: chatid, message_id: msg.message_id
+//             });
+
+//         }, 3000);
+//     })
+// })
+// const server = http.createServer((req, res) => {
+//     const str = fs.createReadStream('./uploads/file_3.jpg');
+//     str.pipe(res);
+// });
+// const port = process.env.PORT || 3000;
+// server.listen(port, () => {
+//     console.log(`Server is running on port ${port}`);
+// }
+// );
