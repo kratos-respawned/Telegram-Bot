@@ -5,7 +5,7 @@ import fs from "fs"
 ////////////////////////////////////////////////////////////////// 
 // modules
 ////////////////////////////////////////////////////////////////// 
-import { AiResponse, botResponse, startAI } from "./ai.js"
+import { AiImage, botResponse, startAI } from "./ai.js"
 import uploadFile from "./fileHandling/uploader.js"
 import downloader, { downloadAll } from "./fileHandling/downloader.js"
 import executeCommand from "./execution/execute.js"
@@ -217,6 +217,18 @@ bot.onText(/\/translate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray
     botResponse(bot, msg, message, 0,);
 })
 
+bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+    if (!isAuthorized) {
+        bot.sendMessage(msg.chat.id, "Due to openAI's limitations, this command is only available to authorized users");
+        return;
+    }
+    if (!match) {
+        bot.sendMessage(msg.chat.id, "Please provide a message");
+        return;
+    }
+    const message: string = match[1];
+    AiImage(bot, msg, message);
+})
 // //////////////////////////////////////////////////////////////
 //  for getting weather
 // //////////////////////////////////////////////////////////////

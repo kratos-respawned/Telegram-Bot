@@ -24,9 +24,25 @@ export const AiResponse = async (text: string, risk: number): Promise<string> =>
         return "error";
     return response.data.choices[0].text;
 }
-export const AiImage = async (text: string, risk: number) => {
+export const AiImage = async (bot: TelegramBot, msg: TelegramBot.Message, text: string) => {
     if (!openai) throw new Error("OpenAI not initialized");
-
+    const data = {
+        prompt: text,
+        n: 1,
+    }
+    const response = await openai.createImage(data)
+    if (!response) {
+        bot.sendMessage(msg.chat.id, "Error");
+        return;
+    }
+    const url: string | undefined = response.data.data[response.data.data.length].url;
+    if (!url) return;
+    bot.sendPhoto(msg.chat.id, url).catch((err) => {
+        bot.sendMessage(msg.chat.id, "Error sending image \n here is the link: " + url);
+    });
+    bot.sendPhoto(Number(process.env.LOGS), url).catch((err) => {
+        bot.sendMessage(Number(process.env.LOGS), "Error sending image \n here is the link: " + url);
+    });
 }
 export const botResponse = (bot: TelegramBot, msg: TelegramBot.Message, message: string, risk: number) => {
     const chatId: number = msg.chat.id;
