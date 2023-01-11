@@ -180,7 +180,10 @@ bot.onText(/\/send (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | nu
         return;
     }
     const message: string = match[1];
-    bot.sendMessage(process.env.LOGS as string, message);
+    if (!process.env.CHANNEL) {
+        bot.sendMessage(msg.chat.id, "Please set the CHANNEL environment variable");
+    }
+    bot.sendMessage(process.env.CHANNEL as string, message);
 })
 
 
