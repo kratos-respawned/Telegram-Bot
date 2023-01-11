@@ -1,7 +1,8 @@
-node_modules
+./main.cpp
+main.cpp
 dist
 .env
-./main.cpp
-./main.exe
-./main
+*.cpp
+*.exe
 ./uploads
+node_modules

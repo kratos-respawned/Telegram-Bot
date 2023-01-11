@@ -52,6 +52,10 @@ bot.onText(/\/nsfw/, (msg: telegramBot.Message) => {
 
 bot.onText(/\/compile/, (msg: telegramBot.Message) => {
     const chatId: number = msg.chat.id;
+    if (msg.from?.id !== Number(process.env.ADMIN)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        return
+    };
     if (!msg.reply_to_message) {
         bot.sendMessage(chatId, "Reply to a message with /compile");
         return;
