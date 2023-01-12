@@ -13,7 +13,9 @@ import executeCommand from "./execution/execute.js"
 import getWaifu from "./anime/getWaifu.js"
 import qna from "@tensorflow-models/qna"
 import "@tensorflow/tfjs-node"
+console.log("Loading Model");
 const model = await qna.load();
+console.log("Model Loaded");
 // //////////////////////////////////////////////////////////
 dotenv.config();
 startAI();
@@ -29,10 +31,10 @@ const isAuthorized = (msg: telegramBot.Message): boolean => {
 };
 
 ////////////////////////////////////////////////////////////
-
+bot.sendMessage(process.env.ADMIN, "Bot started");
 
 bot.onText(/^\/start$/, (msg: telegramBot.Message) => {
-    bot.sendMessage(msg.chat.id, "Hello World")
+    bot.sendMessage(msg.chat.id, "Hello World");
 })
 
 bot.on("message", (msg: telegramBot.Message) => {
@@ -305,10 +307,15 @@ bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | 
     }
     if (!model) {
         console.log("Loading model...");
-        // model = loadModel();
+        bot.sendMessage(msg.chat.id
+            , "Model not loaded");
         return;
     }
-    bot.sendMessage(msg.chat.id, "Generating...").then((msg) => {
-        answerQuestion(model, question, passage);
+    bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
+        const solution = await answerQuestion(model, bot, question, passage);
+        bot.editMessageText(solution, {
+            message_id: msg.message_id,
+            chat_id: msg.chat.id
+        })
     });
 });

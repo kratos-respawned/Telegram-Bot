@@ -1,6 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
 import { Configuration, OpenAIApi } from "openai";
-import fs from "fs";
 var openai: OpenAIApi;
 
 
