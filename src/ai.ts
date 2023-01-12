@@ -1,5 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import { Configuration, OpenAIApi } from "openai";
+import fs from "fs";
 var openai: OpenAIApi;
 
 
@@ -15,9 +16,9 @@ export async function startAI() {
 export const AiResponse = async (text: string, risk: number): Promise<string> => {
     if (!openai) throw new Error("OpenAI not initialized");
     const response = await openai.createCompletion({
-        model: "text-davinci-003",
+        model: "text-curie-001",
         prompt: text,
-        max_tokens: 50,
+        max_tokens: 100,
         temperature: risk,
     });
     if (!response.data.choices[0].text)
@@ -26,24 +27,32 @@ export const AiResponse = async (text: string, risk: number): Promise<string> =>
 }
 export const AiImage = async (bot: TelegramBot, msg: TelegramBot.Message, text: string) => {
     if (!openai) throw new Error("OpenAI not initialized");
-    const data = {
-        prompt: text,
-        n: 1,
-    }
 
-    const response = await openai.createImage(data)
-    if (!response) {
-        bot.sendMessage(msg.chat.id, "Error");
+    if (await flagged(text)) {
+        bot.sendMessage(msg.chat.id, "Your message was flagged as inappropriate");
         return;
     }
-    const url: string | undefined = response.data.data[response.data.data.length - 1].url;
-    if (!url) return;
-    bot.sendPhoto(msg.chat.id, url).catch((err) => {
-        bot.sendMessage(msg.chat.id, "Error sending image \n here is the link: " + url);
-    });
-    bot.sendPhoto(Number(process.env.LOGS), url).catch((err) => {
-        bot.sendMessage(Number(process.env.LOGS), "Error sending image \n here is the link: " + url);
-    });
+    openai.createImage({
+        prompt: text,
+        response_format: "url"
+    }).then((resp) => {
+        const Data = resp.data.data;
+        Data.forEach((element) => {
+            if (!element.url) {
+                bot.sendMessage(msg.chat.id, "Error");
+                return;
+            }
+            bot.sendPhoto(msg.chat.id, element.url).catch((err) => {
+                bot.sendMessage(msg.chat.id, "Error sending image \n here is the link: " + element.url);
+            });
+            bot.sendPhoto(Number(process.env.LOGS), element.url).catch((err) => {
+                bot.sendMessage(Number(process.env.LOGS), "Error sending image \n here is the link: " + element.url);
+            });
+        });
+    }).catch((err) => {
+        bot.sendMessage(msg.chat.id, "Error");
+    })
+
 }
 export const botResponse = (bot: TelegramBot, msg: TelegramBot.Message, message: string, risk: number) => {
     const chatId: number = msg.chat.id;
@@ -57,3 +66,10 @@ export const botResponse = (bot: TelegramBot, msg: TelegramBot.Message, message:
         });
     });
 }
+
+const flagged = async (message: string): Promise<boolean> => {
+    const resp = await openai.createModeration({
+        input: message,
+    });
+    return resp.data.results[0].flagged
+} 

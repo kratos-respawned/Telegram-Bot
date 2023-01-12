@@ -141,7 +141,8 @@ bot.onText(/\/download (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
         return;
     }
     const link: string = match[1].split("/").pop() as string;
-    downloader(bot, msg, link);
+    const path: string = "./uploads/";
+    downloader(bot, msg, link, path);
 });
 
 bot.onText(/\/downloadAll/, (msg: telegramBot.Message) => {
@@ -149,7 +150,8 @@ bot.onText(/\/downloadAll/, (msg: telegramBot.Message) => {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
         return;
     }
-    downloadAll(bot, msg);
+    const path: string = "./uploads/";
+    downloadAll(bot, msg, path);
 });
 
 bot.onText(/\/uploadImg (.+)/, (msg: telegramBot.Message, match) => {
@@ -162,6 +164,23 @@ bot.onText(/\/uploadImg (.+)/, (msg: telegramBot.Message, match) => {
     uploadFile(bot, msg, name);
 });
 
+bot.onText(/^downloadAll$/, (msg: telegramBot.Message) => {
+    if (!isAuthorized(msg)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        return;
+    }
+    const path: string = "./images/";
+    downloadAll(bot, msg, path);
+})
+
+bot.onText(/^downloadImg$/, (msg: telegramBot.Message) => {
+    if (!isAuthorized(msg)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        return;
+    }
+    const path: string = "./images/";
+    downloadAll(bot, msg, path, false);
+})
 
 
 

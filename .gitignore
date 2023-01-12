@@ -6,3 +6,4 @@ dist
 *.exe
 uploads
 node_modules
+images
