@@ -235,7 +235,7 @@ bot.onText(/\/subscribe/, (msg: telegramBot.Message) => {
     const Link: string = "https://api.waifu.im/search/?is_nsfw=false";
     setInterval(() => {
         getter(bot, msg, Link)
-    }, 1000);
+    }, 1000 * 60 * 60 * 24);
 })
 // unsubscribe
 bot.onText(/\/unsubscribe/, (msg: telegramBot.Message) => {
