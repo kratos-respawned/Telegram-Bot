@@ -1,6 +1,7 @@
 import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import fs from "fs"
+// import 
 import { answerQuestion } from "./tensorflow/qna.js"
 ////////////////////////////////////////////////////////////////// 
 // modules
@@ -10,10 +11,12 @@ import uploadFile from "./fileHandling/uploader.js"
 import downloader, { downloadAll } from "./fileHandling/downloader.js"
 import executeCommand from "./execution/execute.js"
 import getWaifu from "./anime/getWaifu.js"
+import qna from "@tensorflow-models/qna"
+import "@tensorflow/tfjs-node"
+const model = await qna.load();
 // //////////////////////////////////////////////////////////
 dotenv.config();
 startAI();
-
 var count: number = 0;
 const TOKEN = process.env.TOKEN;
 if (!TOKEN) throw new Error("Token not found");
@@ -300,7 +303,12 @@ bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | 
         bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
         return;
     }
+    if (!model) {
+        console.log("Loading model...");
+        // model = loadModel();
+        return;
+    }
     bot.sendMessage(msg.chat.id, "Generating...").then((msg) => {
-        answerQuestion(question, passage);
+        answerQuestion(model, question, passage);
     });
 });
