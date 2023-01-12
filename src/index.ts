@@ -7,10 +7,10 @@ import { answerQuestion } from "./tensorflow/qna.js"
 // modules
 ////////////////////////////////////////////////////////////////// 
 import { AiImage, botResponse, startAI } from "./ai.js"
-import uploadFile from "./fileHandling/uploader.js"
 import downloader, { downloadAll } from "./fileHandling/downloader.js"
 import executeCommand from "./execution/execute.js"
 import getWaifu from "./anime/getWaifu.js"
+import uploadImage, { uploader } from "./fileHandling/uploader.js"
 import qna from "@tensorflow-models/qna"
 import "@tensorflow/tfjs-node"
 console.log("Loading Model");
@@ -158,15 +158,44 @@ bot.onText(/\/downloadAll/, (msg: telegramBot.Message) => {
     downloadAll(bot, msg, path);
 });
 
-bot.onText(/\/uploadImg (.+)/, (msg: telegramBot.Message, match) => {
+
+bot.onText(/\/upload (.+)/, (msg: telegramBot.Message, match) => {
     if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
         return;
     }
-    if (!match) { return; }
+    if (!match) return;
     const name = match[1];
-    uploadFile(bot, msg, name);
+    const path: string = "./uploads/";
+    if (msg.reply_to_message?.video) {
+        const video = msg.reply_to_message?.video;
+        console.log(video);
+        const file_id = video?.file_id;
+        uploader(bot, msg, file_id, name);
+        return;
+    }
+    if (msg.reply_to_message?.document) {
+        const doc = msg.reply_to_message?.document;
+        console.log(doc);
+        const file_id = doc?.file_id;
+        uploader(bot, msg, file_id, name);
+        return;
+    }
+    if (msg.reply_to_message?.photo) {
+        const name = match[1];
+        uploadImage(bot, msg, name);
+        return;
+    }
+    if (msg.reply_to_message?.audio) {
+        const audio = msg.reply_to_message?.audio;
+        console.log(audio);
+        const file_id = audio?.file_id;
+        if (!audio.title) { uploader(bot, msg, file_id, name); return; }
+        uploader(bot, msg, file_id, audio.title);
+        return;
+    }
 });
+
 
 bot.onText(/^downloadAll$/, (msg: telegramBot.Message) => {
     if (!isAuthorized(msg)) {
@@ -202,6 +231,10 @@ bot.onText(/\/sendMessage (.+)/, (msg: telegramBot.Message, match: RegExpExecArr
         bot.sendMessage(msg.chat.id, "Please provide a message");
         return;
     }
+    if (msg.chat.type !== "private") {
+        bot.sendMessage(msg.chat.id, "Please use this command in private chat");
+        return;
+    }
     const message: string = match[1];
     if (!process.env.CHANNEL) {
         bot.sendMessage(msg.chat.id, "Please set the CHANNEL environment variable");
@@ -211,6 +244,10 @@ bot.onText(/\/sendMessage (.+)/, (msg: telegramBot.Message, match: RegExpExecArr
 bot.onText(/\/send/, (msg: telegramBot.Message) => {
     if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        return;
+    }
+    if (!msg.reply_to_message) {
+        bot.sendMessage(msg.chat.id, "Please reply to a message");
         return;
     }
     if (!process.env.CHANNEL) {

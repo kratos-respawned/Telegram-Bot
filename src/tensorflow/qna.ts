@@ -5,7 +5,7 @@ export async function answerQuestion(model: qna.QuestionAndAnswer, bot: Telegram
     const answers = model.findAnswers(question, passage);
     try {
         if (!answers[0]) {
-            return "Error";
+            return "Unable to answer";
         }
         return answers[0].text as string;
     } catch {
