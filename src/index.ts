@@ -188,7 +188,7 @@ bot.onText(/^downloadImg$/, (msg: telegramBot.Message) => {
 ///////////////////////////////////////////////
 //// for sending messages to a channel
 ///////////////////////////////////////////////
-bot.onText(/\/send (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+bot.onText(/\/sendMessage (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
     if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
         return;
@@ -204,15 +204,43 @@ bot.onText(/\/send (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | nu
     }
     bot.sendMessage(process.env.CHANNEL as string, message);
 })
+bot.onText(/\/send/, (msg: telegramBot.Message) => {
+    if (!isAuthorized(msg)) {
+        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
+        return;
+    }
+    if (!process.env.CHANNEL) {
+        bot.sendMessage(msg.chat.id, "Please set the CHANNEL environment variable");
+    }
+    if (msg.reply_to_message?.photo) {
+        bot.sendPhoto(process.env.CHANNEL as string, msg.reply_to_message.photo[0].file_id);
+    }
+    if (msg.reply_to_message?.video) {
+        bot.sendVideo(process.env.CHANNEL as string, msg.reply_to_message.video.file_id);
+    }
+    if (msg.reply_to_message?.text) {
+        bot.sendMessage(process.env.CHANNEL as string, msg.reply_to_message.text);
+    }
+
+})
+
+
+const getter = (bot: telegramBot, msg: telegramBot.Message, Link: string) => {
+    bot.sendMessage(msg.chat.id, "A new waifu has arrived");
+    getWaifu(bot, Link, msg)
+}
+
 bot.onText(/\/subscribe/, (msg: telegramBot.Message) => {
     bot.sendMessage(msg.chat.id, "Subscribed to the channel")
     const Link: string = "https://api.waifu.im/search/?is_nsfw=false";
     setInterval(() => {
-        bot.sendMessage(msg.chat.id, "A new waifu has arrived");
-        getWaifu(bot, Link, msg)
-    }, 1000 * 60 * 60 * 12);
-
+        getter(bot, msg, Link)
+    }, 1000);
 })
+// unsubscribe
+bot.onText(/\/unsubscribe/, (msg: telegramBot.Message) => {
+    bot.sendMessage(msg.chat.id, "Ab jab bot restart hoga tbhi ho skta hai")
+});
 
 
 

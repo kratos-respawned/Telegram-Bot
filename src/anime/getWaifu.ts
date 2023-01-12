@@ -3,7 +3,7 @@ import { Waifu } from "../typings/types";
 import fs from "fs"
 import https from "https"
 import downloader from "../fileHandling/downloader.js";
-export default async function getWaifu(bot: TelegramBot, link: string, msg: TelegramBot.Message) {
+export default async function getWaifu(bot: TelegramBot, link: string, msg: TelegramBot.Message, Reply?: boolean) {
     const chatId: number = msg.chat.id;
     try {
         const response: Response = await fetch(link);
