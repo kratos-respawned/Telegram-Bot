@@ -192,7 +192,7 @@ bot.onText(/\/send (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | nu
 //  for AI chat
 // //////////////////////////////////////////////////////////////
 bot.onText(/\/chat (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-    if (!isAuthorized) {
+    if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "Due to openAI's limitations, this command is only available to authorized users");
         return;
     }
@@ -205,7 +205,7 @@ bot.onText(/\/chat (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | nu
 });
 
 bot.onText(/\/translate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-    if (!isAuthorized) {
+    if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "Due to openAI's limitations, this command is only available to authorized users");
         return;
     }
@@ -218,7 +218,7 @@ bot.onText(/\/translate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray
 })
 
 bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-    if (!isAuthorized) {
+    if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "Due to openAI's limitations, this command is only available to authorized users");
         return;
     }
