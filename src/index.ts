@@ -1,7 +1,7 @@
 import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import fs from "fs"
-
+import { answerQuestion } from "./tensorflow/qna.js"
 ////////////////////////////////////////////////////////////////// 
 // modules
 ////////////////////////////////////////////////////////////////// 
@@ -11,10 +11,9 @@ import downloader, { downloadAll } from "./fileHandling/downloader.js"
 import executeCommand from "./execution/execute.js"
 import getWaifu from "./anime/getWaifu.js"
 // //////////////////////////////////////////////////////////
-
-
 dotenv.config();
 startAI();
+
 var count: number = 0;
 const TOKEN = process.env.TOKEN;
 if (!TOKEN) throw new Error("Token not found");
@@ -288,39 +287,20 @@ bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
         AiImage(bot, msg, message);
     })
 })
-// //////////////////////////////////////////////////////////////
-//  for getting weather
-// //////////////////////////////////////////////////////////////
-// bot.onText(/\/weather (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-//     if (!match) {
-//         bot.sendMessage(msg.chat.id, "Please provide a city name");
-//         return;
-//     }
-//     const city: string = match[1];
 
-
-//     const url: string = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.WEATHER_API_KEY}&units=metric`;
-//     axios.get(url).then((res) => {
-//         const data: any = res.data;
-//         const weather: string = `Weather in ${data.name} is ${data.weather[0].description} with a temperature of ${data.main.temp}°C`;
-
-//         bot.sendMessage(msg.chat.id, weather);
-//     }).catch((err) => {
-//         bot.sendMessage(msg.chat.id, "City not found");
-//     })
-
-// });
-
-
-
-bot.on("polling_error", (msg) => {
-    ++count;
-    if (count == 5) {
-        bot.close();
+// ///////////////////////////////////
+//  for tensorflow
+// ///////////////////////////////////
+bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+    if (!match)
+        return;
+    const question: string = match[1];
+    const passage = msg.reply_to_message?.text;
+    if (!passage) {
+        bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
+        return;
     }
-    bot.sendMessage(msg.message, `Polling error ${count}`).catch((err) => { });
-
-})
-
-// console.log("Bot started");
-// testAPI();
+    bot.sendMessage(msg.chat.id, "Generating...").then((msg) => {
+        answerQuestion(question, passage);
+    });
+});
