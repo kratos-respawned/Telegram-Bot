@@ -204,6 +204,16 @@ bot.onText(/\/send (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | nu
     }
     bot.sendMessage(process.env.CHANNEL as string, message);
 })
+bot.onText(/\/subscribe/, (msg: telegramBot.Message) => {
+    bot.sendMessage(msg.chat.id, "Subscribed to the channel")
+    const Link: string = "https://api.waifu.im/search/?is_nsfw=false";
+    setInterval(() => {
+        bot.sendMessage(msg.chat.id, "A new waifu has arrived");
+        getWaifu(bot, Link, msg)
+    }, 1000 * 60 * 60 * 12);
+
+})
+
 
 
 
