@@ -33,6 +33,16 @@ const isAuthorized = (msg: telegramBot.Message): boolean => {
 ////////////////////////////////////////////////////////////
 bot.sendMessage(process.env.ADMIN, "Bot started");
 
+if (!fs.existsSync("uploads")) {
+    fs.mkdirSync("uploads");
+    console.log("Created uploads folder");
+}
+
+if (!fs.existsSync("images")) {
+    fs.mkdirSync("images");
+    console.log("Created images folder");
+}
+
 bot.onText(/^\/start$/, (msg: telegramBot.Message) => {
     bot.sendMessage(msg.chat.id, "Hello World");
 })
@@ -332,7 +342,7 @@ bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
 
 // ///////////////////////////////////
 //  for tensorflow
-// ///////////////////////////////////
+//////////////////////////////////////
 bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
     if (!match)
         return;
@@ -356,3 +366,5 @@ bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | 
         })
     });
 });
+
+
