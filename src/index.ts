@@ -257,24 +257,41 @@ bot.onText(/^\/send$/, (msg: telegramBot.Message) => {
 
 
 
-let x: NodeJS.Timeout | undefined;
+
+type Subscription = {
+    id: number;
+    timer: NodeJS.Timeout | undefined;
+}
+let subscribed: Subscription[] = [];
 bot.onText(/^\/subscribe$/, (msg: telegramBot.Message) => {
-    bot.sendMessage(msg.chat.id, "Subscribed to the channel")
     const Link: string = "https://api.waifu.im/search/?is_nsfw=false";
-    x = setInterval(() => {
-        bot.sendMessage(msg.chat.id, "A new waifu has arrived");
-        getWaifu(bot, Link, msg)
-    }, 1000 * 60 * 60 * 12);
+    const y = subscribed.some((sub) => sub.id === msg.chat.id);
+    if (!y) {
+        bot.sendMessage(msg.chat.id, "You are now subscribed");
+        const timer = setInterval(() => {
+            bot.sendMessage(msg.chat.id, ` A new waifu has arrived :: ${msg.chat.first_name || msg.chat.title} `);
+            getWaifu(bot, Link, msg)
+        }, 10000);
+        subscribed.push({
+            id: msg.chat.id,
+            timer
+        })
+    } else {
+        bot.sendMessage(msg.chat.id, "You are already subscribed");
+        return;
+    }
+    console.log(subscribed);
 })
 bot.onText(/^\/unsubscribe$/, (msg: telegramBot.Message) => {
+    const x = subscribed.find((sub) => sub.id === msg.chat.id);
     if (!x) {
         bot.sendMessage(msg.chat.id, "You are not subscribed ", {
             reply_to_message_id: msg.message_id
         });
         return;
     }
-    clearInterval(x);
-    x = undefined;
+    clearInterval(x.timer);
+    subscribed = subscribed.filter((sub) => sub.id !== msg.chat.id);
     bot.sendMessage(msg.chat.id, "Unsubscribed to the channel")
 })
 
