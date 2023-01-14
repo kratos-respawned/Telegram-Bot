@@ -1,7 +1,6 @@
 import * as telegramBot from "node-telegram-bot-api";
 import * as fs from "fs";
 import * as https from "https";
-
 export default async function uploadImage(bot: telegramBot, msg: telegramBot.Message, name: string): Promise<void> {
     if (msg.reply_to_message?.photo) {
         const photo: telegramBot.PhotoSize = msg.reply_to_message.photo[msg.reply_to_message.photo.length - 1];

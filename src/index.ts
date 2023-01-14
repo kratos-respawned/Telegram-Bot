@@ -2,7 +2,7 @@ import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import fs from "fs"
 // import 
-import { answerQuestion } from "./tensorflow/qna.js"
+// import { answerQuestion } from "./tensorflow/qna.js"
 ////////////////////////////////////////////////////////////////// 
 // modules
 ////////////////////////////////////////////////////////////////// 
@@ -11,18 +11,18 @@ import downloader, { downloadAll } from "./fileHandling/downloader.js"
 import executeCommand from "./execution/execute.js"
 import getWaifu from "./anime/getWaifu.js"
 import uploadImage, { uploader } from "./fileHandling/uploader.js"
-import qna from "@tensorflow-models/qna"
-import "@tensorflow/tfjs-node"
-console.log("Loading Model");
-const model = await qna.load();
-console.log("Model Loaded");
+// import qna from "@tensorflow-models/qna"
+// import "@tensorflow/tfjs-node"
+// console.log("Loading Model");
+// const model = await qna.load();
+// console.log("Model Loaded");
 // //////////////////////////////////////////////////////////
 dotenv.config();
 startAI();
-var count: number = 0;
 const TOKEN = process.env.TOKEN;
 if (!TOKEN) throw new Error("Token not found");
 if (!process.env.ADMIN) throw new Error("Admin not found");
+
 const bot = new telegramBot(TOKEN, { polling: true })
 ////////////////////////////////////////////////////////////
 
@@ -159,7 +159,7 @@ bot.onText(/\/download (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
     downloader(bot, msg, link, path);
 });
 
-bot.onText(/\/downloadAll/, (msg: telegramBot.Message) => {
+bot.onText(/^\/downloadAll$/, (msg: telegramBot.Message) => {
     if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
         return;
@@ -176,7 +176,7 @@ bot.onText(/\/upload (.+)/, (msg: telegramBot.Message, match) => {
     }
     if (!match) return;
     const name = match[1];
-    const path: string = "./uploads/";
+    // const path: string = "./uploads/";
     if (msg.reply_to_message?.video) {
         const video = msg.reply_to_message?.video;
         console.log(video);
@@ -207,7 +207,7 @@ bot.onText(/\/upload (.+)/, (msg: telegramBot.Message, match) => {
 });
 
 
-bot.onText(/^downloadAll$/, (msg: telegramBot.Message) => {
+bot.onText(/^\/getimagesq$/, (msg: telegramBot.Message) => {
     if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
         return;
@@ -216,7 +216,7 @@ bot.onText(/^downloadAll$/, (msg: telegramBot.Message) => {
     downloadAll(bot, msg, path);
 })
 
-bot.onText(/^downloadImg$/, (msg: telegramBot.Message) => {
+bot.onText(/^\/getimages$/, (msg: telegramBot.Message) => {
     if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
         return;
@@ -231,27 +231,7 @@ bot.onText(/^downloadImg$/, (msg: telegramBot.Message) => {
 ///////////////////////////////////////////////
 //// for sending messages to a channel
 ///////////////////////////////////////////////
-bot.onText(/\/sendMessage (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-    if (!isAuthorized(msg)) {
-        bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
-        return;
-    }
-    if (!match) {
-
-        bot.sendMessage(msg.chat.id, "Please provide a message");
-        return;
-    }
-    if (msg.chat.type !== "private") {
-        bot.sendMessage(msg.chat.id, "Please use this command in private chat");
-        return;
-    }
-    const message: string = match[1];
-    if (!process.env.CHANNEL) {
-        bot.sendMessage(msg.chat.id, "Please set the CHANNEL environment variable");
-    }
-    bot.sendMessage(process.env.CHANNEL as string, message);
-})
-bot.onText(/\/send/, (msg: telegramBot.Message) => {
+bot.onText(/^\/send$/, (msg: telegramBot.Message) => {
     if (!isAuthorized(msg)) {
         bot.sendMessage(msg.chat.id, "You are not authorized to use this command");
         return;
@@ -276,22 +256,28 @@ bot.onText(/\/send/, (msg: telegramBot.Message) => {
 })
 
 
-const getter = (bot: telegramBot, msg: telegramBot.Message, Link: string) => {
-    bot.sendMessage(msg.chat.id, "A new waifu has arrived");
-    getWaifu(bot, Link, msg)
-}
 
-bot.onText(/\/subscribe/, (msg: telegramBot.Message) => {
+let x: NodeJS.Timeout | undefined;
+bot.onText(/^\/subscribe$/, (msg: telegramBot.Message) => {
     bot.sendMessage(msg.chat.id, "Subscribed to the channel")
     const Link: string = "https://api.waifu.im/search/?is_nsfw=false";
-    setInterval(() => {
-        getter(bot, msg, Link)
-    }, 1000 * 60 * 60 * 24);
+    x = setInterval(() => {
+        bot.sendMessage(msg.chat.id, "A new waifu has arrived");
+        getWaifu(bot, Link, msg)
+    }, 1000 * 60 * 60 * 12);
 })
-// unsubscribe
-bot.onText(/\/unsubscribe/, (msg: telegramBot.Message) => {
-    bot.sendMessage(msg.chat.id, "Ab jab bot restart hoga tbhi ho skta hai")
-});
+bot.onText(/^\/unsubscribe$/, (msg: telegramBot.Message) => {
+    if (!x) {
+        bot.sendMessage(msg.chat.id, "You are not subscribed ", {
+            reply_to_message_id: msg.message_id
+        });
+        return;
+    }
+    clearInterval(x);
+    x = undefined;
+    bot.sendMessage(msg.chat.id, "Unsubscribed to the channel")
+})
+
 
 
 
@@ -343,28 +329,28 @@ bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
 // ///////////////////////////////////
 //  for tensorflow
 //////////////////////////////////////
-bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-    if (!match)
-        return;
-    const question: string = match[1];
-    const passage = msg.reply_to_message?.text;
-    if (!passage) {
-        bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
-        return;
-    }
-    if (!model) {
-        console.log("Loading model...");
-        bot.sendMessage(msg.chat.id
-            , "Model not loaded");
-        return;
-    }
-    bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
-        const solution = await answerQuestion(model, bot, question, passage);
-        bot.editMessageText(solution, {
-            message_id: msg.message_id,
-            chat_id: msg.chat.id
-        })
-    });
-});
+// bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+//     if (!match)
+//         return;
+//     const question: string = match[1];
+//     const passage = msg.reply_to_message?.text;
+//     if (!passage) {
+//         bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
+//         return;
+//     }
+//     if (!model) {
+//         console.log("Loading model...");
+//         bot.sendMessage(msg.chat.id
+//             , "Model not loaded");
+//         return;
+//     }
+//     bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
+//         const solution = await answerQuestion(model, bot, question, passage);
+//         bot.editMessageText(solution, {
+//             message_id: msg.message_id,
+//             chat_id: msg.chat.id
+//         })
+//     });
+// });
 
 
