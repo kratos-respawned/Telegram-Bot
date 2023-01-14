@@ -1,7 +1,7 @@
 import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import fs from "fs"
-// import 
+import User from "./schema/Subscriber.js"
 // import { answerQuestion } from "./tensorflow/qna.js"
 ////////////////////////////////////////////////////////////////// 
 // modules
@@ -9,8 +9,10 @@ import fs from "fs"
 import { AiImage, botResponse, startAI } from "./ai.js"
 import downloader, { downloadAll } from "./fileHandling/downloader.js"
 import executeCommand from "./execution/execute.js"
-import getWaifu from "./anime/getWaifu.js"
+import getWaifu, { getter } from "./anime/getWaifu.js"
 import uploadImage, { uploader } from "./fileHandling/uploader.js"
+import { Subscription } from "./typings/types.js"
+import mongoose from "mongoose"
 // import qna from "@tensorflow-models/qna"
 // import "@tensorflow/tfjs-node"
 // console.log("Loading Model");
@@ -19,10 +21,17 @@ import uploadImage, { uploader } from "./fileHandling/uploader.js"
 // //////////////////////////////////////////////////////////
 dotenv.config();
 startAI();
+mongoose.connect(`mongodb+srv://${process.env.MONGO_USR}:${process.env.MONGO_PWD}@nodebotcluster.mk6b7ti.mongodb.net/?retryWrites=true&w=majority`, () => {
+    console.log("Connected to DB");
+})
+mongoose.set('strictQuery', false);
+const userList = await User.find({});
+console.log(userList);
+let subscribers: Subscription[] = [];
+// ////////////////////////////////////////////////////////////////
 const TOKEN = process.env.TOKEN;
 if (!TOKEN) throw new Error("Token not found");
 if (!process.env.ADMIN) throw new Error("Admin not found");
-
 const bot = new telegramBot(TOKEN, { polling: true })
 ////////////////////////////////////////////////////////////
 
@@ -80,13 +89,13 @@ bot.on("message", (msg: telegramBot.Message) => {
 
 bot.onText(/\/anime/, (msg: telegramBot.Message) => {
     const Link: string = "https://api.waifu.im/search/?is_nsfw=false";
-    getWaifu(bot, Link, msg)
+    getWaifu(bot, Link, msg.chat.id, true, msg.message_id)
 
 })
 
 bot.onText(/\/nsfw/, (msg: telegramBot.Message) => {
     const Link: string = "https://api.waifu.im/search/?is_nsfw=true";
-    getWaifu(bot, Link, msg)
+    getWaifu(bot, Link, msg.chat.id, true, msg.message_id)
 });
 
 
@@ -176,7 +185,6 @@ bot.onText(/\/upload (.+)/, (msg: telegramBot.Message, match) => {
     }
     if (!match) return;
     const name = match[1];
-    // const path: string = "./uploads/";
     if (msg.reply_to_message?.video) {
         const video = msg.reply_to_message?.video;
         console.log(video);
@@ -256,34 +264,40 @@ bot.onText(/^\/send$/, (msg: telegramBot.Message) => {
 })
 
 
+// /////////////////////////////////////////////////////////////////////////
 
-
-type Subscription = {
-    id: number;
-    timer: NodeJS.Timeout | undefined;
-}
-let subscribed: Subscription[] = [];
-bot.onText(/^\/subscribe$/, (msg: telegramBot.Message) => {
+if (userList.length !== 0) {
     const Link: string = "https://api.waifu.im/search/?is_nsfw=false";
-    const y = subscribed.some((sub) => sub.id === msg.chat.id);
+    userList.forEach((user) => {
+        bot.sendMessage(user.id, "The bot was restarted, you are now subscribed");
+        subscribers.push({
+            id: user.id,
+            timer: setInterval(() => { getter(bot, user.id, Link) }, 1000 * 60 * 60 * 4)
+        });
+    }
+    )
+}
+
+
+bot.onText(/^\/subscribe$/, (msg: telegramBot.Message) => {
+    const Link: string = "https://api.waifu.im/search/?is_nsfw=false"
+    const y = subscribers.some((sub) => sub.id === msg.chat.id);
     if (!y) {
         bot.sendMessage(msg.chat.id, "You are now subscribed");
-        const timer = setInterval(() => {
-            bot.sendMessage(msg.chat.id, ` A new waifu has arrived :: ${msg.chat.first_name || msg.chat.title} `);
-            getWaifu(bot, Link, msg)
-        }, 10000);
-        subscribed.push({
+        const timer = setInterval(() => { getter(bot, msg.chat.id, Link) }, 1000 * 60 * 60 * 4);
+        subscribers.push({
             id: msg.chat.id,
             timer
         })
+        const newUser = new User({ id: msg.chat.id });
+        newUser.save();
     } else {
         bot.sendMessage(msg.chat.id, "You are already subscribed");
         return;
     }
-    console.log(subscribed);
 })
 bot.onText(/^\/unsubscribe$/, (msg: telegramBot.Message) => {
-    const x = subscribed.find((sub) => sub.id === msg.chat.id);
+    const x = subscribers.find((sub) => sub.id === msg.chat.id);
     if (!x) {
         bot.sendMessage(msg.chat.id, "You are not subscribed ", {
             reply_to_message_id: msg.message_id
@@ -291,8 +305,13 @@ bot.onText(/^\/unsubscribe$/, (msg: telegramBot.Message) => {
         return;
     }
     clearInterval(x.timer);
-    subscribed = subscribed.filter((sub) => sub.id !== msg.chat.id);
+    subscribers = subscribers.filter((sub) => sub.id !== msg.chat.id);
     bot.sendMessage(msg.chat.id, "Unsubscribed to the channel")
+    User.deleteOne({ id: msg.chat.id }, (err) => {
+        if (err) {
+            bot.sendMessage(Number(process.env.ADMIN), "Error deleting user from database " + err.message);
+        }
+    });
 })
 
 

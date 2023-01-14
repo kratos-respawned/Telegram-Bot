@@ -3,15 +3,18 @@ import { Waifu } from "../typings/types";
 import fs from "fs"
 import axios from "axios";
 import sharp from "sharp";
-export default async function getWaifu(bot: TelegramBot, link: string, msg: TelegramBot.Message, Reply?: boolean) {
-    const chatId: number = msg.chat.id;
+export default async function getWaifu(bot: TelegramBot, link: string, id: number, reply?: boolean, messageId?: number) {
+    const chatId: number = id;
+
     try {
         const response = await axios.get(link);
         const data: Waifu = await response.data;
         const url: string = data.images[0].url;
         console.log(data);
-        bot.sendPhoto(chatId, url, {
-            reply_to_message_id: msg.message_id,
+        const replyMsg = {
+            ...reply && {
+                reply_to_message_id: messageId
+            },
             reply_markup: {
                 inline_keyboard: [[
                     {
@@ -21,7 +24,8 @@ export default async function getWaifu(bot: TelegramBot, link: string, msg: Tele
                 ]
                 ]
             }
-        }).catch(async () => {
+        }
+        bot.sendPhoto(chatId, url, replyMsg).catch(async () => {
             const newMsg = await bot.sendMessage(chatId, "Large Image \nDownloading");
             axios({
                 method: 'get',
@@ -37,18 +41,7 @@ export default async function getWaifu(bot: TelegramBot, link: string, msg: Tele
                             bot.sendMessage(chatId, err.message);
                         } else {
                             bot.deleteMessage(chatId, newMsg.message_id.toString());
-                            bot.sendPhoto(chatId, `./images/${data.images[0].signature}.jpg`, {
-                                reply_to_message_id: msg.message_id,
-                                reply_markup: {
-                                    inline_keyboard: [[
-                                        {
-                                            text: "Download",
-                                            url: data.images[0].url
-                                        }
-                                    ]
-                                    ]
-                                }
-                            }).then(() => {
+                            bot.sendPhoto(chatId, `./images/${data.images[0].signature}.jpg`, replyMsg).then(() => {
 
                                 fs.unlink(`./images/${data.images[0].signature}.jpg`, (err) => {
                                     if (err) {
@@ -70,4 +63,7 @@ export default async function getWaifu(bot: TelegramBot, link: string, msg: Tele
 
 
 
-
+export const getter = (bot: TelegramBot, id: number, Link: string) => {
+    bot.sendMessage(id, ` A new waifu has arrived  `);
+    getWaifu(bot, Link, id, false)
+}

@@ -22,3 +22,7 @@ export type Waifu = {
     }[];
 }
 
+export type Subscription = {
+    id: number;
+    timer: NodeJS.Timeout | undefined;
+}
