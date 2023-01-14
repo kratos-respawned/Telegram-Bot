@@ -2,7 +2,7 @@ import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import fs from "fs"
 import User from "./schema/Subscriber.js"
-// import { answerQuestion } from "./tensorflow/qna.js"
+import { answerQuestion } from "./tensorflow/qna.js"
 ////////////////////////////////////////////////////////////////// 
 // modules
 ////////////////////////////////////////////////////////////////// 
@@ -13,11 +13,11 @@ import getWaifu, { getter } from "./anime/getWaifu.js"
 import uploadImage, { uploader } from "./fileHandling/uploader.js"
 import { Subscription } from "./typings/types.js"
 import mongoose from "mongoose"
-// import qna from "@tensorflow-models/qna"
-// import "@tensorflow/tfjs-node"
-// console.log("Loading Model");
-// const model = await qna.load();
-// console.log("Model Loaded");
+import qna from "@tensorflow-models/qna"
+import "@tensorflow/tfjs-node"
+console.log("Loading Model");
+const model = await qna.load();
+console.log("Model Loaded");
 // //////////////////////////////////////////////////////////
 dotenv.config();
 startAI();
@@ -27,7 +27,6 @@ mongoose.connect(process.env.MONGO_URL, () => {
 })
 mongoose.set('strictQuery', false);
 const userList = await User.find({});
-console.log(userList);
 let subscribers: Subscription[] = [];
 // ////////////////////////////////////////////////////////////////
 const TOKEN = process.env.TOKEN;
@@ -366,28 +365,28 @@ bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
 // ///////////////////////////////////
 //  for tensorflow
 //////////////////////////////////////
-// bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-//     if (!match)
-//         return;
-//     const question: string = match[1];
-//     const passage = msg.reply_to_message?.text;
-//     if (!passage) {
-//         bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
-//         return;
-//     }
-//     if (!model) {
-//         console.log("Loading model...");
-//         bot.sendMessage(msg.chat.id
-//             , "Model not loaded");
-//         return;
-//     }
-//     bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
-//         const solution = await answerQuestion(model, bot, question, passage);
-//         bot.editMessageText(solution, {
-//             message_id: msg.message_id,
-//             chat_id: msg.chat.id
-//         })
-//     });
-// });
+bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+    if (!match)
+        return;
+    const question: string = match[1];
+    const passage = msg.reply_to_message?.text;
+    if (!passage) {
+        bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
+        return;
+    }
+    if (!model) {
+        console.log("Loading model...");
+        bot.sendMessage(msg.chat.id
+            , "Model not loaded");
+        return;
+    }
+    bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
+        const solution = await answerQuestion(model, question, passage);
+        bot.editMessageText(solution, {
+            message_id: msg.message_id,
+            chat_id: msg.chat.id
+        })
+    });
+});
 
 
