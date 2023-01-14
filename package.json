@@ -27,9 +27,7 @@
     "@tensorflow/tfjs-node": "^4.2.0",
     "axios": "^1.2.2",
     "dotenv": "^16.0.3",
-    "mongodb": "^4.13.0",
     "mongoose": "^6.8.3",
-    "mongoose-function": "^0.1.0",
     "node-telegram-bot-api": "^0.61.0",
     "openai": "^3.1.0",
     "sharp": "^0.31.3"

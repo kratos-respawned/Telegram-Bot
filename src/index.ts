@@ -21,7 +21,8 @@ import mongoose from "mongoose"
 // //////////////////////////////////////////////////////////
 dotenv.config();
 startAI();
-mongoose.connect(`mongodb+srv://${process.env.MONGO_USR}:${process.env.MONGO_PWD}@nodebotcluster.mk6b7ti.mongodb.net/?retryWrites=true&w=majority`, () => {
+if (!process.env.MONGO_URL) throw new Error("Mongo URL not found");
+mongoose.connect(process.env.MONGO_URL, () => {
     console.log("Connected to DB");
 })
 mongoose.set('strictQuery', false);
