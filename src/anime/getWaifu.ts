@@ -10,7 +10,7 @@ export default async function getWaifu(bot: TelegramBot, link: string, id: numbe
         const response = await axios.get(link);
         const data: Waifu = await response.data;
         const url: string = data.images[0].url;
-        console.log(data);
+        // console.log(data);
         const replyMsg = {
             ...reply && {
                 reply_to_message_id: messageId

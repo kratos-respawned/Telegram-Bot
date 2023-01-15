@@ -2,7 +2,7 @@ import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import fs from "fs"
 import User from "./schema/Subscriber.js"
-import { answerQuestion } from "./tensorflow/qna.js"
+// import { answerQuestion } from "./tensorflow/qna.js"
 ////////////////////////////////////////////////////////////////// 
 // modules
 ////////////////////////////////////////////////////////////////// 
@@ -13,6 +13,17 @@ import getWaifu, { getter } from "./anime/getWaifu.js"
 import uploadImage, { uploader } from "./fileHandling/uploader.js"
 import { Subscription } from "./typings/types.js"
 import mongoose from "mongoose"
+// ////////////////////////////////////////////////////////
+
+// ////////////////////////////////////////////////////////
+// import { ChatGPTAPIBrowser } from 'chatgpt'
+// if (!process.env.OPENAI_EMAIL || !process.env.OPENAI_PASSWORD) throw new Error("OpenAI Email or Password not found");
+// const api = new ChatGPTAPIBrowser({
+//     email: process.env.OPENAI_EMAIL,
+//     password: process.env.OPENAI_PASSWORD
+// })
+// await api.initSession()
+// //////////////////////////////////////////////////////////
 import qna from "@tensorflow-models/qna"
 import "@tensorflow/tfjs-node"
 console.log("Loading Model");
@@ -93,10 +104,7 @@ bot.onText(/\/anime/, (msg: telegramBot.Message) => {
 
 })
 
-bot.onText(/\/nsfw/, (msg: telegramBot.Message) => {
-    const Link: string = "https://api.waifu.im/search/?is_nsfw=true";
-    getWaifu(bot, Link, msg.chat.id, true, msg.message_id)
-});
+
 
 
 
@@ -233,8 +241,38 @@ bot.onText(/^\/getimages$/, (msg: telegramBot.Message) => {
     downloadAll(bot, msg, path, false);
 })
 
+bot.on("message", (msg) => {
+    if (msg.photo) {
+        return;
+    }
+    if (msg.document) {
+        return;
+    }
+    if (msg.video) {
+        return;
+    }
+    if (msg.audio) {
+        return;
+    }
+    // check if message is a command
+    if (msg.text?.startsWith("/")) {
+        return;
+    }
+    // send the text to rasa api and get the response
+    const text = msg.text;
+    // console.log(msg);
+    if (!text) return;
+    const data = {
+        sender: msg.from?.id,
+        message: text
+    }
+    // if (!process.env.RASA_URL) return;
+    // axios.post(process.env.RASA_URL, data).then((res) => {
+    //     console.log(res.data);
+    // });
 
 
+});
 
 ///////////////////////////////////////////////
 //// for sending messages to a channel
@@ -365,28 +403,28 @@ bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
 // ///////////////////////////////////
 //  for tensorflow
 //////////////////////////////////////
-bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-    if (!match)
-        return;
-    const question: string = match[1];
-    const passage = msg.reply_to_message?.text;
-    if (!passage) {
-        bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
-        return;
-    }
-    if (!model) {
-        console.log("Loading model...");
-        bot.sendMessage(msg.chat.id
-            , "Model not loaded");
-        return;
-    }
-    bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
-        const solution = await answerQuestion(model, question, passage);
-        bot.editMessageText(solution, {
-            message_id: msg.message_id,
-            chat_id: msg.chat.id
-        })
-    });
-});
+// bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+//     if (!match)
+//         return;
+//     const question: string = match[1];
+//     const passage = msg.reply_to_message?.text;
+//     if (!passage) {
+//         bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
+//         return;
+//     }
+//     if (!model) {
+//         console.log("Loading model...");
+//         bot.sendMessage(msg.chat.id
+//             , "Model not loaded");
+//         return;
+//     }
+//     bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
+//         const solution = await answerQuestion(model, question, passage);
+//         bot.editMessageText(solution, {
+//             message_id: msg.message_id,
+//             chat_id: msg.chat.id
+//         })
+//     });
+// });
 
 
