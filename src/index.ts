@@ -2,7 +2,7 @@ import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import fs from "fs"
 import User from "./schema/Subscriber.js"
-// import { answerQuestion } from "./tensorflow/qna.js"
+import { answerQuestion } from "./tensorflow/qna.js"
 ////////////////////////////////////////////////////////////////// 
 // modules
 ////////////////////////////////////////////////////////////////// 
@@ -45,7 +45,8 @@ if (!TOKEN) throw new Error("Token not found");
 if (!process.env.ADMIN) throw new Error("Admin not found");
 const bot = new telegramBot(TOKEN, { polling: true })
 ////////////////////////////////////////////////////////////
-
+// import { private_1 } from "./private/private_1.js"
+// private_1(bot);
 const isAuthorized = (msg: telegramBot.Message): boolean => {
     return msg.from?.id === Number(process.env.ADMIN)
 };
@@ -103,10 +104,6 @@ bot.onText(/\/anime/, (msg: telegramBot.Message) => {
     getWaifu(bot, Link, msg.chat.id, true, msg.message_id)
 
 })
-
-
-
-
 
 ////////////////////////////////////////////////////////////////
 //  for command execution
@@ -403,28 +400,28 @@ bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
 // ///////////////////////////////////
 //  for tensorflow
 //////////////////////////////////////
-// bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-//     if (!match)
-//         return;
-//     const question: string = match[1];
-//     const passage = msg.reply_to_message?.text;
-//     if (!passage) {
-//         bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
-//         return;
-//     }
-//     if (!model) {
-//         console.log("Loading model...");
-//         bot.sendMessage(msg.chat.id
-//             , "Model not loaded");
-//         return;
-//     }
-//     bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
-//         const solution = await answerQuestion(model, question, passage);
-//         bot.editMessageText(solution, {
-//             message_id: msg.message_id,
-//             chat_id: msg.chat.id
-//         })
-//     });
-// });
+bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+    if (!match)
+        return;
+    const question: string = match[1];
+    const passage = msg.reply_to_message?.text;
+    if (!passage) {
+        bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
+        return;
+    }
+    if (!model) {
+        console.log("Loading model...");
+        bot.sendMessage(msg.chat.id
+            , "Model not loaded");
+        return;
+    }
+    bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
+        const solution = await answerQuestion(model, question, passage);
+        bot.editMessageText(solution, {
+            message_id: msg.message_id,
+            chat_id: msg.chat.id
+        })
+    });
+});
 
 

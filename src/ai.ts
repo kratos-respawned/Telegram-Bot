@@ -27,13 +27,15 @@ export const AiResponse = async (text: string, risk: number): Promise<string> =>
 export const AiImage = async (bot: TelegramBot, msg: TelegramBot.Message, text: string) => {
     if (!openai) throw new Error("OpenAI not initialized");
 
-    if (await flagged(text)) {
-        bot.sendMessage(msg.chat.id, "Your message was flagged as inappropriate");
-        return;
-    }
+    // if (await flagged(text)) {
+    //     bot.sendMessage(msg.chat.id, "Your message was flagged as inappropriate");
+    //     return;
+    // }
     openai.createImage({
         prompt: text,
-        response_format: "url"
+        response_format: "url",
+        size: "512x512",
+
     }).then((resp) => {
         const Data = resp.data.data;
         Data.forEach((element) => {
@@ -49,7 +51,7 @@ export const AiImage = async (bot: TelegramBot, msg: TelegramBot.Message, text: 
             });
         });
     }).catch((err) => {
-        bot.sendMessage(msg.chat.id, "Error");
+        bot.sendMessage(msg.chat.id, err.message);
     })
 
 }
