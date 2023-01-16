@@ -2,7 +2,7 @@ import telegramBot from "node-telegram-bot-api"
 import dotenv from "dotenv"
 import fs from "fs"
 import User from "./schema/Subscriber.js"
-import { answerQuestion } from "./tensorflow/qna.js"
+// import { answerQuestion } from "./tensorflow/qna.js"
 ////////////////////////////////////////////////////////////////// 
 // modules
 ////////////////////////////////////////////////////////////////// 
@@ -24,11 +24,11 @@ import mongoose from "mongoose"
 // })
 // await api.initSession()
 // //////////////////////////////////////////////////////////
-import qna from "@tensorflow-models/qna"
-import "@tensorflow/tfjs-node"
-console.log("Loading Model");
-const model = await qna.load();
-console.log("Model Loaded");
+// import qna from "@tensorflow-models/qna"
+// import "@tensorflow/tfjs-node"
+// console.log("Loading Model");
+// const model = await qna.load();
+// console.log("Model Loaded");
 // //////////////////////////////////////////////////////////
 dotenv.config();
 startAI();
@@ -400,28 +400,28 @@ bot.onText(/\/generate (.+)/, (msg: telegramBot.Message, match: RegExpExecArray 
 // ///////////////////////////////////
 //  for tensorflow
 //////////////////////////////////////
-bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
-    if (!match)
-        return;
-    const question: string = match[1];
-    const passage = msg.reply_to_message?.text;
-    if (!passage) {
-        bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
-        return;
-    }
-    if (!model) {
-        console.log("Loading model...");
-        bot.sendMessage(msg.chat.id
-            , "Model not loaded");
-        return;
-    }
-    bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
-        const solution = await answerQuestion(model, question, passage);
-        bot.editMessageText(solution, {
-            message_id: msg.message_id,
-            chat_id: msg.chat.id
-        })
-    });
-});
+// bot.onText(/\/answer (.+)/, (msg: telegramBot.Message, match: RegExpExecArray | null) => {
+//     if (!match)
+//         return;
+//     const question: string = match[1];
+//     const passage = msg.reply_to_message?.text;
+//     if (!passage) {
+//         bot.sendMessage(msg.chat.id, "Please reply to a message containing the passage");
+//         return;
+//     }
+//     if (!model) {
+//         console.log("Loading model...");
+//         bot.sendMessage(msg.chat.id
+//             , "Model not loaded");
+//         return;
+//     }
+//     bot.sendMessage(msg.chat.id, "Generating...").then(async (msg) => {
+//         const solution = await answerQuestion(model, question, passage);
+//         bot.editMessageText(solution, {
+//             message_id: msg.message_id,
+//             chat_id: msg.chat.id
+//         })
+//     });
+// });
 
 
